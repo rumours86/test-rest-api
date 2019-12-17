@@ -23,7 +23,7 @@ class Kernel
     private RequestContext $requestContext;
     private array $container = [];
 
-    public function __construct()
+    protected function __construct()
     {
         $this->request = Request::createFromGlobals();
 
