@@ -1,0 +1,19 @@
+generate_product:
+    path: /product/generate
+    defaults: {_controller: 'App\Controller\Api\ProductController::postGenerate'}
+    methods:  [POST]
+
+product_list:
+    path: /product/list
+    defaults: {_controller: 'App\Controller\Api\ProductController::getProductList'}
+    methods:  [GET]
+
+create_order:
+    path: /order/create
+    defaults: {_controller: 'App\Controller\Api\OrderController::postCreate'}
+    methods:  [POST]
+
+charge_order:
+    path: /order/charge
+    defaults: {_controller: 'App\Controller\Api\OrderController::putCharge'}
+    methods:  [PUT]
