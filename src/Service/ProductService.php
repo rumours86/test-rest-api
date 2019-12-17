@@ -31,7 +31,7 @@ final class ProductService extends ObjectService
     {
         $entityManager = $this->getEntityManager();
         $objectList = [];
-        for ($i = 0; $i < $count; $i++) {
+        for ($i = 0; $i < $count; ++$i) {
             $object =
                 (new Product())
                     ->setTitle(sha1(mt_rand()))

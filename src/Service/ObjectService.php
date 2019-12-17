@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Kernel;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 
@@ -14,7 +15,8 @@ class ObjectService
 
     protected function getEntityManager(): EntityManager
     {
-        global $app;
+        $app = Kernel::getInstance();
+
         return $app->get('doctrine');
     }
 }

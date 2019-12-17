@@ -5,10 +5,12 @@
         "doctrine/orm": "^2.7",
         "symfony/yaml": "^5.0",
         "symfony/http-client": "^5.0",
-        "doctrine/doctrine-bundle": "^2.0"
+        "doctrine/doctrine-bundle": "^2.0",
+        "symfony/dotenv": "^5.0"
     },
     "require-dev": {
-        "roave/security-advisories": "dev-master"
+        "roave/security-advisories": "dev-master",
+        "friendsofphp/php-cs-fixer": "^2.16"
     },
     "autoload": {
         "psr-4": {

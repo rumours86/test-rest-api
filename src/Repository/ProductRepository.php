@@ -2,8 +2,8 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use App\Entity\Product;
+use Doctrine\ORM\EntityRepository;
 
 class ProductRepository extends EntityRepository
 {

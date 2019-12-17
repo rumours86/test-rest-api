@@ -1,32 +1,30 @@
 <?php
 
-namespace App\System;
+namespace App;
 
-use App\System\Config\Config;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
 use Exception;
-use Psr\Container\ContainerInterface;
-use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
-use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
+use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 
-class App
+class Kernel
 {
+    public static ?self $instance = null;
     private Request $request;
     private RouteCollection $routes;
     private RequestContext $requestContext;
-    private ContainerInterface $container;
+    private array $container = [];
 
     public function __construct()
     {
-        $this->container = new Container();
         $this->request = Request::createFromGlobals();
 
         $this->requestContext = new RequestContext();
@@ -36,18 +34,29 @@ class App
         $loader = new YamlFileLoader($fileLocator);
         $this->routes = $loader->load('routes.yaml');
 
-        $config = new Config();
-        $config->addConfig('doctrine.yaml');
+        $doctrineConfig = Setup::createAnnotationMetadataConfiguration([PROJECT_DIR . '/src/Entity'], true, null, null, false);
+        $conf = [
+            'host' => getenv('DB_HOST'),
+            'port' => getenv('DB_PORT'),
+            'driver' => getenv('DB_DRIVER'),
+            'charset' => getenv('DB_CHARSET'),
+            'dbname' => getenv('DB_NAME'),
+            'user' => getenv('DB_USER'),
+            'password' => getenv('DB_PASS'),
+        ];
 
-        $doctrineConfig = Setup::createAnnotationMetadataConfiguration([PROJECT_DIR . '/src/Entity'], true);
-        $doctrine = EntityManager::create($config->get('doctrine'), $doctrineConfig);
+        $doctrine = EntityManager::create($conf, $doctrineConfig);
 
         $this->add('doctrine', $doctrine);
     }
 
-    public function getContainer(): ContainerInterface
+    public static function getInstance(): self
     {
-        return $this->container;
+        if (null === static::$instance) {
+            static::$instance = new static();
+        }
+
+        return static::$instance;
     }
 
     public function run(): void
@@ -58,7 +67,7 @@ class App
         $this->request->attributes->add($matcher->match($this->request->getPathInfo()));
 
         // load controller
-        if (false === $controller =  (new ControllerResolver())->getController($this->request)) {
+        if (false === $controller = (new ControllerResolver())->getController($this->request)) {
             throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $this->request->getPathInfo()));
         }
 
@@ -78,13 +87,13 @@ class App
         $response->send();
     }
 
-    public function add($key, $object): void
+    public function add(string $key, $object): void
     {
-        $this->container->set($key, $object);
+        $this->container[$key] = $object;
     }
 
-    public function get($key)
+    public function get(string $key)
     {
-        return $this->container->get($key);
+        return $this->container[$key] ?? null;
     }
 }

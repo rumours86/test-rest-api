@@ -6,4 +6,7 @@ if (!defined('PROJECT_DIR')) {
 
 require_once PROJECT_DIR . '/vendor/autoload.php';
 
-$app = new App\System\App();
+use Symfony\Component\Dotenv\Dotenv;
+(new Dotenv(true))->loadEnv(PROJECT_DIR . '/.env');
+
+$app = App\Kernel::getInstance();
