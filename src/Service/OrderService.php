@@ -10,11 +10,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class OrderService extends ObjectService
 {
-    protected EntityRepository $objectRepository;
+    protected EntityRepository $orderRepository;
 
     public function __construct()
     {
-        $this->objectRepository = $this->getRepository(Order::class);
+        $this->orderRepository = $this->getEntityManager()->getRepository(Order::class);
     }
 
     public function addOrder(float $price): Order
@@ -34,7 +34,7 @@ final class OrderService extends ObjectService
     public function getObject(int $id): ?Order
     {
         /** @var Order|null $object */
-        $object = $this->objectRepository->find($id);
+        $object = $this->orderRepository->find($id);
 
         return $object;
     }

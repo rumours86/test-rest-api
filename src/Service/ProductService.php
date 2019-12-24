@@ -3,28 +3,28 @@
 namespace App\Service;
 
 use App\Entity\Product;
-use Doctrine\ORM\EntityRepository;
+use App\Repository\ProductRepository;
 
 final class ProductService extends ObjectService
 {
-    protected EntityRepository $objectRepository;
+    protected ProductRepository $productRepository;
 
     public function __construct()
     {
-        $this->objectRepository = $this->getRepository(Product::class);
+        $this->productRepository = $this->getEntityManager()->getRepository(Product::class);
     }
 
     public function getObject(int $id): ?Product
     {
         /** @var Product|null $object */
-        $object = $this->objectRepository->find($id);
+        $object = $this->productRepository->find($id);
 
         return $object;
     }
 
     public function findAll(): ?array
     {
-        return $this->objectRepository->findAll();
+        return $this->productRepository->findAll();
     }
 
     public function generateBatchProducts(int $count = 20): array
@@ -49,6 +49,6 @@ final class ProductService extends ObjectService
 
     public function getTotalPrice(array $productIds): float
     {
-        return $this->objectRepository->getTotalPriceByIds($productIds);
+        return $this->productRepository->getTotalPriceByIds($productIds);
     }
 }
