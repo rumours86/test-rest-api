@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Order;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,10 +18,15 @@ final class OrderService extends ObjectService
         $this->orderRepository = $this->getEntityManager()->getRepository(Order::class);
     }
 
-    public function addOrder(float $price): Order
+    public function addOrder(Request $request): array
     {
+        $result = $this->validateCreate($request);
+        if (false === $result['valid']) {
+            return $result;
+        }
+
         $order = (new Order())
-            ->setPrice($price)
+            ->setPrice($result['price'])
             ->setStatus(Order::STATUS_CREATED)
         ;
 
@@ -28,7 +34,30 @@ final class OrderService extends ObjectService
         $entityManager->persist($order);
         $entityManager->flush();
 
-        return $order;
+        return [
+            'body' => (array) $order,
+            'status' => Response::HTTP_CREATED,
+        ];
+    }
+
+    public function chargeOrder(Request $request): array
+    {
+        $result = $this->validateCharge($request);
+        if (false === $result['valid']) {
+            return $result;
+        }
+        $order = $result['order'];
+
+        $order->setStatus(Order::STATUS_CHARGED);
+
+        $entityManager = $this->getEntityManager();
+        $entityManager->persist($order);
+        $entityManager->flush();
+
+        return [
+            'body' => (array) $order,
+            'status' => null,
+        ];
     }
 
     public function getObject(int $id): ?Order
@@ -45,13 +74,13 @@ final class OrderService extends ObjectService
 
         $result = [
             'valid' => false,
-            'message' => '',
+            'body' => '',
             'status' => null,
             'price' => 0,
         ];
 
         if (null === $productIds) {
-            $result['message'] = 'productIds does not exist!';
+            $result['body'] = 'productIds does not exist!';
             $result['status'] = Response::HTTP_NOT_FOUND;
 
             return $result;
@@ -59,7 +88,7 @@ final class OrderService extends ObjectService
         $productService = new ProductService();
         $result['price'] = $productService->getTotalPrice($productIds);
         if ($result['price'] <= 0) {
-            $result['message'] = 'No one product is selected.';
+            $result['body'] = 'No one product is selected.';
 
             return $result;
         }
@@ -76,25 +105,25 @@ final class OrderService extends ObjectService
 
         $result = [
             'valid' => false,
-            'message' => '',
+            'body' => '',
             'status' => null,
         ];
         $result['order'] = $this->getObject($id);
         if (null === $result['order']) {
-            $result['message'] = "Order #$id does not exist!";
+            $result['body'] = "Order #$id does not exist!";
             $result['status'] = Response::HTTP_NOT_FOUND;
 
             return $result;
         }
 
         if ($result['order']->isCharged()) {
-            $result['message'] = "Order #$id is already charged!";
+            $result['body'] = "Order #$id is already charged!";
 
             return $result;
         }
 
         if ($result['order']->isNotEqualPrice($price)) {
-            $result['message'] = 'Price is not equal order price!';
+            $result['body'] = 'Price is not equal order price!';
 
             return $result;
         }
@@ -102,7 +131,7 @@ final class OrderService extends ObjectService
         $httpClient = HttpClient::create();
         $response = $httpClient->request('GET', 'http://ya.ru');
         if (Response::HTTP_OK !== $response->getStatusCode()) {
-            $result['message'] = 'Service ya.ru is not available.';
+            $result['body'] = 'Service ya.ru is not available.';
 
             return $result;
         }
@@ -110,16 +139,5 @@ final class OrderService extends ObjectService
         $result['valid'] = true;
 
         return $result;
-    }
-
-    public function chargeOrder(Order $order): Order
-    {
-        $order->setStatus(Order::STATUS_CHARGED);
-
-        $entityManager = $this->getEntityManager();
-        $entityManager->persist($order);
-        $entityManager->flush();
-
-        return $order;
     }
 }
